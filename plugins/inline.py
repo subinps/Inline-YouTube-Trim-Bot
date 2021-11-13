@@ -39,21 +39,27 @@ async def search(client, query):
     keyword = string
     start, end = None, None
     if '|' in string:
-        times = string.split("|")
-        if len(times) == 2:
-            keyword = (times[0]).strip()
-            try:
-                start_, end_ = (times[1]).strip().split(None, 1)
-                start = get_time(start_.strip())
-                end = get_time(end_.strip())
-            except:
-                start, end = None, None
+        times = string.split("|", 1)
+    elif '?t=' in string:
+        times = string.split("?t=", 1)
+    elif '&t=' in string:
+        times = string.split("&t=", 1)
+    else:
+        times = []
+    if len(times) == 2:
+        keyword = (times[0]).strip()
+        try:
+            start_, end_ = (times[1]).strip().split(None, 1)
+            start = get_time(start_.strip())
+            end = get_time(end_.strip())
+        except:
+            start, end = None, None
     if string == "":
         answers.append(
             InlineQueryResultArticle(
                 title="Usage Guide",
                 description=("How to use me?!"),
-                input_message_content=InputTextMessageContent("Just type Bot username followed by a space and your youtube query and use | to specify trim duration and make sure to seperate start and end points with a space.\n\nExample: `@TrimYtbot Niram | 1:25:1 1:26:6` or `@TrimYtbot Niram | 1800 2000`\n\n__Note: You can specify timestamps either in Hour:Minute:Seconds or Minute:Seconds format or in seconds.__"),
+                input_message_content=InputTextMessageContent("Just type Bot username followed by a space and your youtube query and use | or '&t=' or '?t=' to specify trim duration and make sure to seperate start and end points with a space.\n\nExample: `@TrimYtbot Niram | 1:25:1 1:26:6` or `@TrimYtbot Niram | 1800 2000`\n\n__Note: You can specify timestamps either in Hour:Minute:Seconds or Minute:Seconds format or in seconds.__"),
                 reply_markup=InlineKeyboardMarkup(get_buttons(start, end, get_time(0), "start", user, ""))
                 )
             )

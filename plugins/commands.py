@@ -34,7 +34,7 @@ async def start(bot, message):
 
 @Client.on_message(filters.command("help"))
 async def help(bot, message):
-    await start()
+    await start(bot, message)
 
 @Client.on_message(filters.private & filters.text & ~filters.via_bot)
 async def text_msgs(bot, message):

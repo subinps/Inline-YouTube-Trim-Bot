@@ -75,9 +75,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
     tdur  = int(end) - int(start)
 
     if info:
-        caption = f"<a href=https://www.youtube.com/watch?v={id}?t={start}>{title}</a>\n👀 Views: {view}\n🎞 Duration: {dur}\n✂️ Trim Duration: {tdur} seconds (from `{get_time_hh_mm_ss(start)}` to `{get_time_hh_mm_ss(end)}`)"
+        caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n👀 Views: {view}\n🎞 Duration: {dur}\n✂️ Trim Duration: {tdur} seconds (from `{get_time_hh_mm_ss(start)}` to `{get_time_hh_mm_ss(end)}`)"
     else:
-        caption = f"<a href=https://www.youtube.com/watch?v={id}?t={start}>{title}</a>\n✂️ Trim Duration: {tdur} (from {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)})"
+        caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n✂️ Trim Duration: {tdur} (from {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)})"
     
     link = await get_link(vid) # generate a direct download link for video 
     try:

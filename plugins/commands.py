@@ -15,7 +15,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
+from utils import TG_SUCKS, FIX_TG_SUCKS
 @Client.on_message(filters.command("start"))
 async def start(bot, message):
     buttons = [
@@ -26,6 +26,16 @@ async def start(bot, message):
                 InlineKeyboardButton('Updates', url="https://t.me/subin_works")
             ]
         ]
+    if len(message.command) > 1 and  (message.command[1]).startswith("tgsucks"):
+        _, vid_id = (message.command[1]).split("_", 1)
+        await message.reply("Something went wrong and Blame Telegram for that :(\nI will be sending the trimmed video shortly")
+        if TG_SUCKS.get(vid_id):
+            video = TG_SUCKS.get(vid_id)
+            await message.reply_video(video['file_id'], caption=video['caption'])
+        else:
+            FIX_TG_SUCKS[vid_id] = True
+        return
+    
     await message.reply(
         f"**Hey {message.from_user.mention},\nIam an Inline Youtube Trimmer.**\n__You can use me only via inline mode.__\n\nExample: `@TrimYtbot Niram | 1:25:1 1:26:6` or `@TrimYtbot Niram | 1800 2000`",
         reply_markup=InlineKeyboardMarkup(buttons)

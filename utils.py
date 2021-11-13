@@ -19,7 +19,11 @@ from math import log, floor
 import json
 from pyrogram.types import InlineKeyboardButton
 import time
-VIDEO_DICT = {}
+
+VIDEO_DICT = {} # to store video data for further faster inline queries
+# Somehow telegram sucks
+TG_SUCKS = {}
+FIX_TG_SUCKS = {}
 
 async def get_link(id):
     ytdl_cmd = [ "yt-dlp", "--geo-bypass", "-g", "-f", "best[height<=?720][width<=?1280]/best", f"https://youtu.be/{id}"]

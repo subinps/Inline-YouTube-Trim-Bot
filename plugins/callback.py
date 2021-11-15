@@ -15,22 +15,30 @@
 
 import asyncio
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery
-from pyrogram.types import InputMediaVideo
 from pyrogram.errors import FloodWait, MessageIdInvalid
+from pyrogram.types import CallbackQuery, InputMediaVideo
 import time
-from utils import VIDEO_DICT, TG_SUCKS, FIX_TG_SUCKS, get_height_and_width, get_link, trim_video, get_time_hh_mm_ss, short_num, progress_bar
+from utils import FIX_TG_SUCKS, TG_SUCKS, VIDEO_DICT, CAPTIONS, get_height_and_width, get_link, trim_video, get_time_hh_mm_ss, short_num, progress_bar
 import os
 from yt_dlp import YoutubeDL
 from config import Config
-
 
 BOT = {} # to store bot username for avoiding floodwait.
 
 @Client.on_callback_query(filters.regex(r"^trim"))
 async def cb_handler(client: Client, query: CallbackQuery):
-    _, start, end, vid, user = query.data.split(":")
-    BLAME_TG = False
+    _, start, end, vid, user, caption = query.data.split(":")
+    BLAME_TG = None
+    is_default_caption = False
+    if caption == "none": 
+        caption = None # If no caption is provided by user, default caption will be used.
+        is_default_caption = True
+    elif caption == "nill":
+        caption = "" # if only -c is used while inline query.
+    else:
+        caption = CAPTIONS.get(caption)
+        if caption is None:
+            is_default_caption = True
     if query.from_user.id != int(user):
         return await query.answer("Okda", show_alert=True)
     begin = time.time()
@@ -73,12 +81,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
         VIDEO_DICT[id] = {'dur':dur, 'views':view, 'title':title}
 
     tdur  = int(end) - int(start)
+    if is_default_caption:
+        if info:
+            caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n👀 Views: {view}\n🎞 Duration: {dur}\n✂️ Trim Duration: {tdur} seconds (from `{get_time_hh_mm_ss(start)}` to `{get_time_hh_mm_ss(end)}`)"
+        else:
+            caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n✂️ Trim Duration: {tdur} (from {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)})"
 
-    if info:
-        caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n👀 Views: {view}\n🎞 Duration: {dur}\n✂️ Trim Duration: {tdur} seconds (from `{get_time_hh_mm_ss(start)}` to `{get_time_hh_mm_ss(end)}`)"
-    else:
-        caption = f"<a href=https://www.youtube.com/watch?v={id}&t={start}>{title}</a>\n✂️ Trim Duration: {tdur} (from {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)})"
-    
     link = await get_link(vid) # generate a direct download link for video 
     try:
         await client.edit_inline_caption(inline_message_id = query.inline_message_id, caption=caption + "\n\nStatus: Getting Video Details..")
@@ -134,7 +142,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         progress=progress_bar,
         progress_args=(client, time.time(), query.inline_message_id, caption)
     )
-    media = InputMediaVideo(upload.video.file_id, caption=caption+ f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds")
+    media = InputMediaVideo(upload.video.file_id, caption = caption + (f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds" if is_default_caption else ""))
     try:
         await client.edit_inline_media(query.inline_message_id, media)
     except FloodWait as e:
@@ -146,8 +154,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         print(e)
     if BLAME_TG:
         if FIX_TG_SUCKS.get(f'{vid}_{start}_{end}'):
-            await client.send_video(query.from_user.id, upload.video.file_id, caption=caption+ f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds")
-        TG_SUCKS[f'{vid}_{start}_{end}'] = {'file_id':upload.video.file_id, 'caption':caption+ f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds"}
+            await client.send_video(query.from_user.id, upload.video.file_id, caption=caption + (f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds" if is_default_caption else ""))
+        TG_SUCKS[f'{vid}_{start}_{end}'] = {'file_id':upload.video.file_id, 'caption':caption + (f"\nStatus: Succesfully Uploaded.\nTime Taken {round(p_end-begin)} Seconds" if is_default_caption else "")}
     try:
         os.remove(out)
         os.remove(thumb)

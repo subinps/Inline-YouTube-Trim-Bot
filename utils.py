@@ -22,6 +22,7 @@ import time
 
 VIDEO_DICT = {} # to store video data for further faster inline queries
 # Somehow telegram sucks
+CAPTIONS = {}  # to store custom captions if any.
 TG_SUCKS = {}
 FIX_TG_SUCKS = {}
 
@@ -123,25 +124,29 @@ def short_num(number):
     magnitude = int(floor(log(number, k)))
     return  '%.2f%s' % (round(int(number) / k**magnitude, 2), units[magnitude])
 
-def get_buttons(start, end, dur, vid_id, user, query):
+def get_buttons(start, end, dur, vid_id, user, query, caption):
+    if caption is None:
+        caption = "none"
+    elif not caption:
+        caption = 'nill'
     if start and end \
         and int(start) <= int(end) <= int(dur):
         return [
             [
                 InlineKeyboardButton(
                     f"Trim from {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)}",
-                    callback_data=f"trim:{start}:{end}:{vid_id}:{user}",
+                    callback_data=f"trim:{start}:{end}:{vid_id}:{user}:{caption}",
                 ),
             ],
             [
-                InlineKeyboardButton('Search Agian', switch_inline_query_current_chat=query),
+                InlineKeyboardButton('Search Again', switch_inline_query_current_chat=query),
             ],
         ]
 
     else:
         return [
             [
-                InlineKeyboardButton('Search Agian', switch_inline_query_current_chat=query)
+                InlineKeyboardButton('Search Again', switch_inline_query_current_chat=query)
             ]
         ]
 

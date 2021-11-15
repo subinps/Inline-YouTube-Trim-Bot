@@ -27,7 +27,7 @@ from pyrogram import (
     errors
 )
 import re
-from utils import get_time, get_time_hh_mm_ss, short_num, VIDEO_DICT, get_buttons
+from utils import get_time, get_time_hh_mm_ss, short_num, VIDEO_DICT, get_buttons, CAPTIONS
 from yt_dlp import YoutubeDL
 
 
@@ -37,7 +37,7 @@ async def search(client, query):
     user = query.from_user.id
     string = query.query.strip().rstrip()
     keyword = string
-    start, end = None, None
+    start, end, a_caption = None, None, None
     if '|' in string:
         times = string.split("|", 1)
     elif '?t=' in string:
@@ -50,6 +50,11 @@ async def search(client, query):
         keyword = (times[0]).strip()
         try:
             start_, end_ = (times[1]).strip().split(None, 1)
+            if "-c" in end_: # check for custom caption 
+                end_, a_caption = end_.split("-c", 1)
+                if a_caption:
+                    CAPTIONS[query.id] = a_caption # saving captions to dict
+                    a_caption = query.id
             start = get_time(start_.strip())
             end = get_time(end_.strip())
         except:
@@ -59,12 +64,12 @@ async def search(client, query):
             InlineQueryResultArticle(
                 title="Usage Guide",
                 description=("How to use me?!"),
-                input_message_content=InputTextMessageContent("Just type Bot username followed by a space and your youtube query and use | or '&t=' or '?t=' to specify trim duration and make sure to seperate start and end points with a space.\n\nExample: `@TrimYtbot Niram | 1:25:1 1:26:6` or `@TrimYtbot Niram | 1800 2000`\n\n__Note: You can specify timestamps either in Hour:Minute:Seconds or Minute:Seconds format or in seconds.__"),
-                reply_markup=InlineKeyboardMarkup(get_buttons(start, end, get_time(0), "start", user, ""))
+                input_message_content=InputTextMessageContent("Just type Bot username followed by a space and your youtube query and use | or '&t=' or '?t=' to specify trim duration and make sure to separate start and end points with a space.\n\nExample: `@TrimYtbot Niram | 1:25:1 1:26:6` or `@TrimYtbot Niram | 1800 2000`\n\n__Note: You can specify timestamps either in Hour:Minute:Seconds or Minute:Seconds format or in seconds.__"),
+                reply_markup=InlineKeyboardMarkup(get_buttons(start, end, get_time(0), "start", user, "", a_caption))
                 )
             )
         return await query.answer(results=answers, cache_time=0)
-    
+
     else:
         regex = r"^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?"
         match = re.match(regex, keyword)
@@ -103,7 +108,7 @@ async def search(client, query):
                 view = info['views']
                 title = info['title']
                 id  = match.group(1)
-            buttons = get_buttons(start, end, get_time(dur), id, user, keyword)
+            buttons = get_buttons(start, end, get_time(dur), id, user, keyword, a_caption)
             caption = f"<a href=https://www.youtube.com/watch?v={id}>{title}</a>\n👀 Views: {view}\n🎞 Duration: {dur}"
             if start and end:
                 caption += f"\n✂️ Selected Trim Duration: {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)}"
@@ -125,7 +130,7 @@ async def search(client, query):
         else:
             videosSearch = VideosSearch(keyword.lower(), limit=50)
             for v in videosSearch.result()["result"]:
-                buttons = get_buttons(start, end, get_time(v["duration"]),  v['id'], user, keyword)
+                buttons = get_buttons(start, end, get_time(v["duration"]),  v['id'], user, keyword, a_caption)
                 caption = f"<a href=https://www.youtube.com/watch?v={v['id']}>{v['title']}</a>\n👀 Views: {v['viewCount']['short']}\n🎞 Duration: {v['duration']}"
                 if start and end:
                     caption += f"\n✂️ Selected Trim Duration: {get_time_hh_mm_ss(start)} to {get_time_hh_mm_ss(end)}"
